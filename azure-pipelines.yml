@@ -1,0 +1,33 @@
+variables:
+  azureSubscription: CNT
+  resourcegroup: tailwind-traders-rg
+  location: eastus
+  ImageName: website
+
+steps:
+- task: AzureResourceGroupDeployment@2
+  displayName: Azure Deployment
+  inputs:
+    azureSubscription: $(azureSubscription)
+    resourceGroupName: $(resourcegroup)
+    location: $(location)
+    csmFile: Deploy/deployment.json
+
+
+- task: Docker@1
+  displayName: 'Build an image'
+  inputs:
+    azureSubscriptionEndpoint: $(azureSubscription)
+    azureContainerRegistry: $(acr).azurecr.io
+    dockerFile: Source/Tailwind.Traders.Web/Dockerfile
+    arguments: '-t $(acr).azurecr.io/$(ImageName):$(Build.BuildId)'
+    imageName: '$(ImageName):$(Build.BuildId)'
+    includeLatestTag: true
+
+- task: Docker@1
+  displayName: 'Push Image'
+  inputs:
+    azureSubscriptionEndpoint: $(azureSubscription)
+    azureContainerRegistry: '$(acr).azurecr.io'
+    command: 'Push an image'
+    imageName: '$(ImageName):$(Build.BuildId)'
